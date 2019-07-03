@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import React, { useCallback, useState, useEffect, useRef } from 'react'
-import { apply, Canvas, useRender, useResource, useThree } from 'react-three-fiber'
+import { apply, Canvas, useRender, useResource, useThree, useSize } from 'react-three-fiber'
 import { EffectComposer } from './../resources/postprocessing/EffectComposer'
 import { ShaderPass } from './../resources/postprocessing/ShaderPass'
 import { RenderPass } from './../resources/postprocessing/RenderPass'
@@ -63,8 +63,9 @@ function Swarm({ mouse }) {
 
 function Effect() {
   const composer = useRef()
-  const { scene, gl, size, camera } = useThree()
-  useEffect(() => void composer.current.setSize(size.width, size.height), [size])
+  const { scene, gl, camera } = useThree()
+  const { width, height } = useSize()
+  useEffect(() => void composer.current.setSize(width, height), [width, height])
   useRender(({ gl }) => void ((gl.autoClear = true), composer.current.render()), true)
   return (
     <effectComposer ref={composer} args={[gl]}>
@@ -75,7 +76,7 @@ function Effect() {
       <shaderPass
         attachArray="passes"
         args={[FXAAShader]}
-        material-uniforms-resolution-value={[1 / size.width, 1 / size.height]}
+        material-uniforms-resolution-value={[1 / width, 1 / height]}
         renderToScreen
       />
     </effectComposer>

@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import React, { useState, useRef, useContext, useEffect, useCallback, useMemo } from 'react'
-import { apply, Canvas, useRender, useThree, useResource } from 'react-three-fiber'
+import { apply, Canvas, useRender, useThree, useResource, useSize } from 'react-three-fiber'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 import fontFile from '../resources/fonts/unknown'
 apply({ OrbitControls })
@@ -38,15 +38,16 @@ function Text({ children, size = 1, letterSpacing = 0.01, color = '#000000' }) {
 function Content() {
   const camera = useRef()
   const controls = useRef()
-  const { size, setDefaultCamera } = useThree()
+  const { width, height } = useSize()
+  const { setDefaultCamera } = useThree()
   useEffect(() => void setDefaultCamera(camera.current), [])
   useRender(() => controls.current.update())
   return (
     <>
       <perspectiveCamera
         ref={camera}
-        aspect={size.width / size.height}
-        radius={(size.width + size.height) / 4}
+        aspect={width / height}
+        radius={(width + height) / 4}
         fov={55}
         position={[0, 0, 5]}
         onUpdate={self => self.updateProjectionMatrix()}

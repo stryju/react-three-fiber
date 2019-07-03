@@ -1,5 +1,5 @@
 import { Canvas } from './src/canvas'
-import { useRender, useThree, useUpdate, useResource } from './src/hooks'
+import { useRender, useThree, useUpdate, useResource, useSize } from './src/hooks'
 import {
   addEffect,
   invalidate,
@@ -29,4 +29,5 @@ export {
   useThree,
   useUpdate,
   useResource,
+  useSize,
 }

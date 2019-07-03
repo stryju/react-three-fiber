@@ -11,7 +11,7 @@ import 'pointer-events-polyfill'
 
 const loader = new THREE.TextureLoader()
 function Image({ url1, position = [0, 0, 0], ...props }) {
-  const { invalidate, size, viewport } = useThree()
+  const { invalidate, viewport } = useThree()
   const texture = useMemo(() => {
     const texture = loader.load(url1, invalidate)
     texture.minFilter = THREE.LinearFilter

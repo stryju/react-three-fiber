@@ -42,10 +42,7 @@ export type CanvasProps = {
   onCreated?: Function
 }
 
-export type Measure = [
-  { ref: React.MutableRefObject<HTMLDivElement | undefined> },
-  { left: number; top: number; width: number; height: number }
-]
+export type Measure = [{ ref: React.MutableRefObject<HTMLDivElement | undefined> }, DOMRectReadOnly | null]
 
 export type IntersectObject = Event &
   THREE.Intersection & {
@@ -55,17 +52,21 @@ export type IntersectObject = Event &
   }
 
 export const stateContext = React.createContext(null)
+export const sizeContext = React.createContext<DOMRectReadOnly | null>(null)
 
 function useMeasure(): Measure {
   const ref = useRef<HTMLDivElement>()
 
-  const [bounds, set] = useState({ left: 0, top: 0, width: 0, height: 0 })
+  const [bounds, set] = useState<DOMRectReadOnly | null>(null)
   const [ro] = useState(() => new ResizeObserver(([entry]) => set(entry.contentRect)))
 
   useEffect(() => {
     if (ref.current) ro.observe(ref.current)
+  })
+
+  useEffect(() => {
     return () => ro.disconnect()
-  }, [ref.current])
+  }, [ro])
 
   return [{ ref }, bounds]
 }
@@ -128,7 +129,6 @@ export const Canvas = React.memo(
       captured: undefined,
       canvas: undefined,
       canvasRect: undefined,
-      size: undefined,
       viewport: undefined,
 
       subscribe: (fn: Function) => {
@@ -154,7 +154,6 @@ export const Canvas = React.memo(
     // Writes locals into public state for distribution among subscribers, context, etc
     useEffect(() => {
       state.current.ready = ready
-      state.current.size = size
       state.current.camera = defaultCam
       state.current.invalidateFrameloop = invalidateFrameloop
       state.current.vr = vr
@@ -184,27 +183,29 @@ export const Canvas = React.memo(
 
     // Adjusts default camera
     useEffect(() => {
-      state.current.aspect = size.width / size.height || 0
+      state.current.aspect = size != null ? size.width / size.height : 0
 
-      if ((state.current.camera as THREE.OrthographicCamera).isOrthographicCamera) {
-        state.current.viewport = { width: size.width, height: size.height, factor: 1 }
-      } else {
-        const target = new THREE.Vector3(0, 0, 0)
-        const distance = state.current.camera.position.distanceTo(target)
-        const fov = THREE.Math.degToRad(state.current.camera.fov) // convert vertical fov to radians
-        const height = 2 * Math.tan(fov / 2) * distance // visible height
-        const width = height * state.current.aspect
-        state.current.viewport = { width, height, factor: size.width / width }
+      if (size != null) {
+        if ((state.current.camera as THREE.OrthographicCamera).isOrthographicCamera) {
+          state.current.viewport = { width: size.width, height: size.height, factor: 1 }
+        } else {
+          const target = new THREE.Vector3(0, 0, 0)
+          const distance = state.current.camera.position.distanceTo(target)
+          const fov = THREE.Math.degToRad(state.current.camera.fov) // convert vertical fov to radians
+          const height = 2 * Math.tan(fov / 2) * distance // visible height
+          const width = height * state.current.aspect
+          state.current.viewport = { width, height, factor: size.width / width }
+        }
       }
 
-      state.current.canvasRect = bind.ref.current.getBoundingClientRect()
+      state.current.canvasRect = canvas.current.getBoundingClientRect()
 
       if (ready) {
-        state.current.gl.setSize(size.width, size.height)
+        if (size != null) state.current.gl.setSize(size.width, size.height)
 
         /* https://github.com/drcmda/react-three-fiber/issues/92
            Sometimes automatic default camera adjustment isn't wanted behaviour */
-        if (updateDefaultCamera) {
+        if (updateDefaultCamera && size != null) {
           if ((state.current.camera as THREE.OrthographicCamera).isOrthographicCamera) {
             state.current.camera.left = size.width / -2
             state.current.camera.right = size.width / 2
@@ -238,11 +239,13 @@ export const Canvas = React.memo(
 
     // Render v-dom into scene
     useLayoutEffect(() => {
-      if (size.width > 0 && size.height > 0) {
+      if (size != null) {
         render(
           <stateContext.Provider value={sharedState.current}>
-            <IsReady />
-            {typeof children === 'function' ? children(state.current) : children}
+            <sizeContext.Provider value={size}>
+              <IsReady />
+              {typeof children === 'function' ? children(state.current) : children}
+            </sizeContext.Provider>
           </stateContext.Provider>,
           state.current.scene,
           state
