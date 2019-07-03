@@ -1,5 +1,5 @@
 import React, { useState, useRef, useContext, useEffect, useCallback, useMemo } from 'react'
-import { apply, Canvas, useRender, useThree } from 'react-three-fiber'
+import { apply, Canvas, useRender, useThree, useSize } from 'react-three-fiber'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 import { EffectComposer } from './../resources/postprocessing/EffectComposer'
 import { ShaderPass } from './../resources/postprocessing/ShaderPass'
@@ -11,8 +11,9 @@ apply({ OrbitControls, EffectComposer, ShaderPass, RenderPass, WaterPass })
 function Main({ camera }) {
   const scene = useRef()
   const composer = useRef()
-  const { gl, size } = useThree()
-  useEffect(() => void composer.current.setSize(size.width, size.height), [size])
+  const { gl } = useThree()
+  const { width, height } = useSize()
+  useEffect(() => void composer.current.setSize(width, height), [width, height])
   useRender(({ gl }) => void ((gl.autoClear = true), composer.current.render()), true)
   return (
     <scene ref={scene}>
@@ -59,15 +60,16 @@ function Hud({ camera }) {
 function Content() {
   const camera = useRef()
   const controls = useRef()
-  const { size, setDefaultCamera } = useThree()
+  const { setDefaultCamera } = useThree()
+  const { width, height } = useSize()
   useEffect(() => void setDefaultCamera(camera.current), [])
   useRender(() => controls.current.update())
   return (
     <>
       <perspectiveCamera
         ref={camera}
-        aspect={size.width / size.height}
-        radius={(size.width + size.height) / 4}
+        aspect={width / height}
+        radius={(width + height) / 4}
         fov={55}
         position={[0, 0, 5]}
         onUpdate={self => self.updateProjectionMatrix()}

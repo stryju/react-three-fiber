@@ -1,5 +1,5 @@
 import { useRef, useContext, useEffect, useMemo, useState } from 'react'
-import { stateContext, CanvasContext } from './canvas'
+import { stateContext, sizeContext, CanvasContext } from './canvas'
 
 // helper type for omitting properties from types
 type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>
@@ -58,4 +58,8 @@ export function useResource(optionalRef?: React.MutableRefObject<any>): any {
   const ref = optionalRef ? optionalRef : localRef
   useEffect(() => void set(ref.current), [ref.current])
   return [ref, resource]
+}
+
+export function useSize(): DOMRectReadOnly | null {
+  return useContext(sizeContext)
 }

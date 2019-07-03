@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import React, { useState, useRef, useContext, useEffect, useCallback, useMemo } from 'react'
 import { apply as applySpring, useSpring, a, interpolate } from 'react-spring/three'
-import { apply as applyThree, Canvas, useRender, useThree } from 'react-three-fiber'
+import { apply as applyThree, Canvas, useRender, useThree, useSize } from 'react-three-fiber'
 import data from './../resources/data'
 
 // Import and register postprocessing classes as three-native-elements
@@ -33,9 +33,9 @@ function Image({ url, opacity, scale, ...props }) {
 function Text({ children, position, opacity, color = 'white', fontSize = 410 }) {
   const {
     camera,
-    size: { width, height },
     viewport: { width: viewportWidth, height: viewportHeight },
   } = useThree()
+  const { width, height } = useSize()
   const scale = viewportWidth > viewportHeight ? viewportWidth : viewportHeight
   const canvas = useMemo(() => {
     const canvas = document.createElement('canvas')
@@ -97,9 +97,10 @@ function Stars({ position }) {
 
 /** This component creates a glitch effect */
 const Effects = React.memo(({ factor }) => {
-  const { gl, scene, camera, size } = useThree()
+  const { gl, scene, camera } = useThree()
+  const { width, height } = useSize()
   const composer = useRef()
-  useEffect(() => void composer.current.setSize(size.width, size.height), [size])
+  useEffect(() => void composer.current.setSize(width, height), [width, height])
   // This takes over as the main render-loop (when 2nd arg is set to true)
   useRender(() => composer.current.render(), true)
   return (
@@ -129,7 +130,7 @@ function Images({ top, mouse, scrollMax }) {
 
 /** This component maintains the scene */
 function Scene({ top, mouse }) {
-  const { size } = useThree()
+  const size = useSize()
   const scrollMax = size.height * 4.5
   return (
     <>
